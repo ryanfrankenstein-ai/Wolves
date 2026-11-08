@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from functools import lru_cache
 import json
 import re
-from urllib.parse import quote, urljoin
+from urllib.parse import quote, urljoin, urlsplit
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
@@ -196,13 +196,15 @@ def official_event(row, team):
         tip = datetime.strptime(f"{hour}:{minute or '00'}{half.upper()}M", "%I:%M%p")
         day = day.replace(hour=tip.hour, minute=tip.minute)
     event_name = opponent.get_text(" ", strip=True)
+    opponent_link = opponent.select_one("a[href]")
+    opponent_host = urlsplit(opponent_link["href"]).hostname if opponent_link else None
     marker = "at" if "sidearm-schedule-away-game" in row["class"] else "vs."
     opponent_image = row.select_one(".sidearm-schedule-game-opponent-logo img")
     image_url = (opponent_image.get("data-src") or opponent_image.get("src")) if opponent_image else None
     opponent_logo = quote(urljoin(team["schedule"], image_url), safe=":/?&=%") if image_url else None
     points = re.findall(r"\d+", score[0]) if score else [None, None]
     matchup = [{"name": team["name"], "logo": f"/static/{team['logo']}" if team.get("logo") else None, "score": points[0]},
-               {"name": event_name, "logo": opponent_logo, "score": points[1]}]
+               {"name": event_name, "logo": opponent_logo, "score": points[1], "host": opponent_host}]
     return {"id": f"{team['name']}-{team['program']}-{row.get('data-game-id', day.isoformat())}",
             "name": f"{team['name']} {marker} {event_name}",
             "date": day.date().isoformat(), "start": day.isoformat(),

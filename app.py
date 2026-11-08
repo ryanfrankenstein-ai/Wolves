@@ -1,11 +1,12 @@
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import json
 import logging
 import os
 from pathlib import Path
 import threading
 import time
+from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
 from flask import Flask, jsonify, render_template, url_for
@@ -18,6 +19,11 @@ CENTRAL = ZoneInfo("America/Chicago")
 ROSTER = json.loads(Path(__file__).with_name("roster.json").read_text(encoding="utf-8"))
 TEAMS = ROSTER["teams"]
 PLAYERS = ROSTER["players"]
+TEAM_BY_ESPN = {str(team["espn"]): key for key, team in TEAMS.items() if team.get("espn")}
+TEAM_BY_NAME = {team["name"].casefold(): key for key, team in TEAMS.items()}
+TEAM_BY_HOST = {urlsplit(team["schedule"]).hostname.removeprefix("www."): key for key, team in TEAMS.items()}
+ACTIVE_NAMES = {key: [player["name"] for player in PLAYERS if player["team"] == key and not player.get("archive")]
+                for key in TEAMS}
 lock = threading.Lock()
 cache = {}
 checking = False
@@ -32,7 +38,7 @@ def refresh():
         def fetch(item):
             key, team = item
             try:
-                result = read_team(team, [p["name"] for p in PLAYERS if p["team"] == key and not p.get("archive")])
+                result = read_team(team, ACTIVE_NAMES[key])
                 with lock:
                     previous = cache.get(key, {})
                     if result.get("partial") and previous.get("players"):
@@ -53,6 +59,15 @@ def refresh():
             checking = False
 
 
+def game_with_players(game):
+    matchup = []
+    for team in game.get("matchup", []):
+        key = TEAM_BY_ESPN.get(team["id"]) if "id" in team else (
+            TEAM_BY_HOST.get((team.get("host") or "").removeprefix("www.")) or TEAM_BY_NAME.get(team["name"].casefold()))
+        matchup.append({**team, "players": ACTIVE_NAMES.get(key, [])})
+    return {**game, "matchup": matchup}
+
+
 def dashboard():
     global checking
     now = datetime.now(CENTRAL)
@@ -62,16 +77,18 @@ def dashboard():
             threading.Thread(target=refresh, daemon=True).start()
         data, refreshing = dict(cache), checking
     today = now.date().isoformat()
-    games, live, upcoming = {}, {}, {}
-    for key, result in data.items():
+    yesterday = (now.date() - timedelta(days=1)).isoformat()
+    games = {}
+    for result in data.values():
         for game in result.get("games", []):
-            game = {**game, "delayed": result["delayed"]}
-            if game["date"] == today:
-                games[game["id"]] = game
-            if game["state"] == "in" and game.get("lines"):
-                live[game["id"]] = game
-            if game["date"] >= today and game["state"] == "pre":
-                upcoming[game["id"]] = game
+            previous, freshness = games.get(game["id"], ({}, (False, "")))
+            current_freshness = (not result["delayed"], result.get("checked", ""))
+            current = {**game, "delayed": result["delayed"]}
+            if current_freshness < freshness:
+                previous, current = current, previous
+            lines = {**previous.get("lines", {}), **current.get("lines", {})}
+            games[game["id"]] = ({**current, "lines": lines}, max(freshness, current_freshness))
+    ordered = sorted((game for game, _ in games.values()), key=lambda game: game["start"])
     players = []
     for player in PLAYERS:
         result = data.get(player["team"], {})
@@ -83,9 +100,10 @@ def dashboard():
                         "team_logo": url_for("static", filename=team["logo"]) if team.get("logo") else None,
                         "delayed": result.get("delayed", False)})
     players.sort(key=lambda player: player.get("last", {}).get("start", ""), reverse=True)
-    return {"players": players, "today": sorted(games.values(), key=lambda g: g["start"]),
-            "upcoming": sorted(upcoming.values(), key=lambda g: g["start"])[:10],
-            "live": list(live.values()), "refreshing": refreshing,
+    return {"players": players, "today": [game_with_players(game) for game in ordered if game["date"] == today],
+            "upcoming": [game for game in ordered if game["date"] >= today and game["state"] == "pre"][:10],
+            "live": [game_with_players(game) for game in ordered if game["state"] == "in" and game["date"] >= yesterday],
+            "refreshing": refreshing,
             "checked": max((r.get("checked", "") for r in data.values()), default=""),
             "delayed": [TEAMS[key]["name"] for key, result in data.items() if result["delayed"]],
             "date_label": now.strftime("%A, %B %d").replace(" 0", " "),
