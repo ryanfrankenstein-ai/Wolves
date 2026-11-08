@@ -130,6 +130,8 @@ def box_lines(summary, team_id):
                 stats = {KEYS[label]: value for label, value in zip(labels, item.get("stats", []))
                          if label in KEYS and value not in ("", "--", "-")}
                 if stats:
+                    if isinstance(item.get("starter"), bool):
+                        stats["starter"] = item["starter"]
                     lines[normalized(athlete.get("displayName", ""))] = stats
     return lines
 
@@ -180,8 +182,12 @@ def collect(games, names, selected, read_box):
     players = {}
     for name, entries in history.items():
         if entries:
-            players[name] = {"last": entries[-1], "average": averages([g["stats"] for g in entries]),
-                             "gp": len(entries), "partial": failed}
+            stats = [entry["stats"] for entry in entries]
+            player = {"last": entries[-1], "average": averages(stats), "gp": len(entries), "partial": failed}
+            if all("starter" in line for line in stats):
+                starts = sum(line["starter"] for line in stats)
+                player.update(starts=starts, starter=starts * 2 > len(entries))
+            players[name] = player
     return {"games": games, "players": players, "partial": failed}
 
 
@@ -241,14 +247,27 @@ def official_event(row, team):
 def official_lines(url):
     soup = BeautifulSoup(fetch(url), "html.parser")
     lines = {}
-    for row in soup.select("table tbody tr"):
-        player = row.select_one(".boxscore_player_link")
-        if not player:
-            continue
-        cells = {cell["data-label"].upper(): cell.get_text(" ", strip=True) for cell in row.select("td[data-label]")}
-        stats = {KEYS[key]: value for key, value in cells.items() if key in KEYS and value not in ("", "–", "-")}
-        if "pts" in stats and stats.get("min") not in ("0", "00:00", "0:00"):
-            lines[normalized(player.get_text(" ", strip=True))] = stats
+    for table in soup.select("table"):
+        headers = [cell.get_text(" ", strip=True).upper() for cell in table.select("thead th")]
+        starter_index = headers.index("GS") if "GS" in headers else None
+        for row in table.select("tbody tr"):
+            player = row.select_one(".boxscore_player_link")
+            if not player:
+                continue
+            cells = {cell["data-label"].upper(): cell.get_text(" ", strip=True) for cell in row.select("td[data-label]")}
+            stats = {KEYS[key]: value for key, value in cells.items() if key in KEYS and value not in ("", "–", "-")}
+            columns = row.find_all(["td", "th"], recursive=False)
+            if starter_index is not None and starter_index < len(columns):
+                marker = columns[starter_index].get_text(" ", strip=True)
+                if marker in ("*", ""):
+                    stats["starter"] = marker == "*"
+            if "pts" in stats and (stats.get("starter") or stats.get("min") not in ("0", "00:00", "0:00")):
+                name = normalized(player.get_text(" ", strip=True))
+                if starter_index is not None:
+                    lines[name] = stats
+                else:
+                    # Sidearm can repeat players in half-by-half tables without a GS column.
+                    lines.setdefault(name, stats)
     if not lines:
         raise ValueError("Official box score has no readable player lines")
     return lines

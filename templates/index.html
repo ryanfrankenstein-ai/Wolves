@@ -58,6 +58,7 @@
             {% if player.portrait %}<img class="portrait" src="{{ player.portrait }}" alt="" width="72" height="86" loading="lazy" decoding="async">{% endif %}
             <div class="player-identity"><p class="eyebrow">{{ player.level }} · {{ player.program }}</p><h3>{{ player.name }}</h3>
               <p class="player-school">{% if player.team_logo %}<img class="team-mark" src="{{ player.team_logo }}" alt="" width="22" height="22" loading="lazy" decoding="async">{% endif %}<span>{{ player.school }} · {{ player.position }}</span></p>
+              {% if player.starter %}<small class="starter-note">Starter · {{ player.starts }} of {{ player.gp }} {% if player.partial %}recorded {% endif %}appearance{% if player.gp != 1 %}s{% endif %}</small>{% endif %}
             </div>
             <span class="number">#{{ player.number }}</span>
           </header>

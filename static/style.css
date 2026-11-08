@@ -67,6 +67,7 @@ input::placeholder {color:#a9b6ce}
 .player-head h3 {font-size:clamp(27px,3.3vw,35px);margin:5px 0}
 .player-head p:not(.eyebrow) {color:var(--silver);font-size:13px}
 .player-school {display:flex;align-items:center;gap:6px;line-height:1.3}
+.starter-note {display:block;margin-top:5px;color:var(--light);font-size:11px;font-weight:600}
 .team-mark {flex:none;object-fit:contain;padding:3px;border-radius:5px;background:#f2f4fa}
 .number {align-self:flex-start;color:#bdcdff;font:800 27px/1 var(--heading)}
 .player-body {display:grid;gap:12px;padding:15px 17px}

@@ -69,12 +69,13 @@ function gameCard(game, {showDate = false, showPlayers = false} = {}) {
   </article>`;
 }
 
-function playerHeader(player, label) {
+function playerHeader(player, label, starterNote = "") {
   return `<header class="player-head">
       ${image(player.portrait, "portrait", 72, 86)}
       <div class="player-identity"><p class="eyebrow">${escape(label)}</p>
       <h3>${escape(player.name)}</h3><p class="player-school">${image(player.team_logo, "team-mark", 22, 22)}
-      <span>${escape(player.school)} · ${escape(player.position)}</span></p></div>
+      <span>${escape(player.school)} · ${escape(player.position)}</span></p>
+      ${starterNote ? `<small class="starter-note">${escape(starterNote)}</small>` : ""}</div>
       <span class="number">#${escape(player.number)}</span>
     </header>`;
 }
@@ -84,7 +85,8 @@ function liveGame(game) {
   return `<div class="live-game" role="group" aria-label="${escape(game.name)}">
     ${gameCard(game, {showPlayers: true})}
     ${players.map((player) => `<article class="player-card live-card">
-      ${playerHeader(player, game.delayed ? "Live stats · delayed" : "Live stats")}
+      ${playerHeader(player, game.delayed ? "Live stats · delayed" : "Live stats",
+        game.lines[player.name].starter ? "Starter this game" : "")}
       <div class="player-body">${statsBlock(game.lines[player.name])}</div>
     </article>`).join("")}
   </div>`;
@@ -93,8 +95,11 @@ function liveGame(game) {
 function playerCard(player) {
   const avg = player.average;
   const last = player.last;
+  const starterNote = player.starter
+    ? `Starter · ${player.starts} of ${player.gp} ${player.partial ? "recorded " : ""}appearance${player.gp === 1 ? "" : "s"}`
+    : "";
   return `<article class="player-card">
-    ${playerHeader(player, `${player.level} · ${player.program}`)}
+    ${playerHeader(player, `${player.level} · ${player.program}`, starterNote)}
     <div class="player-body">
       ${player.archive ? `<p class="empty">College roster archive · ${escape(player.archive)}</p>` : ""}
       ${player.previous?.length ? `<p class="empty">Previously at ${escape(player.previous.join(", "))}</p>` : ""}
