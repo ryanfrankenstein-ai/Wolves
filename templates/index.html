@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Follow former Waukee Northwest Wolves in college basketball.">
+  <title>Wolves in College Basketball | Waukee Northwest</title>
+  <link rel="icon" href="{{ url_for('static', filename='wolves.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script defer src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="wrap topbar">
+      <a class="brand" href="/"><img src="{{ url_for('static', filename='wolves.png') }}" alt="" width="42" height="42"> Waukee Northwest</a>
+      <nav aria-label="Dashboard"><a href="#today">Scores</a><a href="#players">Players</a><a href="#sources">Sources</a></nav>
+    </div>
+  </header>
+  <main class="wrap">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">WAUKEE, IOWA <span> / </span> ALUMNI TRACKER</p>
+        <h1>Wolves in<br><em>College Basketball</em></h1>
+        <p>Follow former Northwest Wolves across men’s and women’s college basketball.</p>
+        <div class="hero-numbers"><span><b>{{ data.players|length }}</b> verified players</span><span><b>{{ teams|length }}</b> college programs</span><span><b>{{ data.season }}</b> season</span></div>
+      </div>
+      <img class="hero-mark" src="{{ url_for('static', filename='wolves.png') }}" width="240" height="240" alt="Waukee Northwest Wolves">
+    </header>
+
+    <section id="today" aria-labelledby="today-heading" class="panel">
+      <div class="section-head"><div><p class="eyebrow">SCOREBOARD</p><h2 id="today-heading">Today’s Games</h2></div><span class="date" id="date-label">{{ data.date_label }}</span></div>
+      <div class="game-grid" id="today-games"><p class="empty">Checking the college schedules…</p></div>
+      <p id="feed-status" class="feed-status" role="status"></p>
+    </section>
+
+    <section id="live" aria-labelledby="live-heading" class="panel">
+      <div class="section-head"><div><p class="eyebrow">GAME DAY</p><h2 id="live-heading"><span class="signal"></span>Wolves Live</h2></div><span class="date">Player box scores</span></div>
+      <div class="game-grid" id="live-games"><p class="empty">Live player lines appear when a scoring feed provides them.</p></div>
+    </section>
+
+    <section id="upcoming" aria-labelledby="upcoming-heading" class="panel">
+      <div class="section-head"><div><p class="eyebrow">ON DECK</p><h2 id="upcoming-heading">Upcoming Games</h2></div><span class="date">Central time</span></div>
+      <div class="game-grid" id="upcoming-games"><p class="empty">Checking the college schedules…</p></div>
+    </section>
+
+    <section id="players" aria-labelledby="players-heading" class="players-section">
+      <div class="section-head"><div><p class="eyebrow">THE PACK</p><h2 id="players-heading">College Player Tracker</h2></div><span class="date" id="player-count">{{ data.players|length }} players</span></div>
+      <div class="filters">
+        <input type="search" id="search" aria-label="Search for a player or college" placeholder="Search for a player or college">
+        <select id="program" aria-label="Filter by program"><option value="">All programs</option><option>Men’s</option><option>Women’s</option></select>
+        <select id="school" aria-label="Filter by college"><option value="">All colleges</option>{% for key, team in teams.items() %}<option value="{{ key }}">{{ team.name }}</option>{% endfor %}</select>
+        <select id="sort" aria-label="Sort players"><option value="recent">Most recent game</option><option value="name">Name A–Z</option><option value="pts">Points per game</option><option value="reb">Rebounds per game</option><option value="ast">Assists per game</option></select>
+      </div>
+      <div id="player-grid" class="player-grid">
+        {% for player in data.players %}
+        <article class="player-card">
+          <header class="player-head"><div><p class="eyebrow">{{ player.level }} · {{ player.program }}</p><h3>{{ player.name }}</h3><p>{{ player.school }} · {{ player.position }}</p></div><span class="number">#{{ player.number }}</span></header>
+          <div class="player-body"><p class="empty">Game and season stats appear as sources publish them.</p><a href="{{ player.bio }}">Official player bio ↗</a></div>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+    <footer id="sources">
+      <div><b>WAUKEE NORTHWEST</b><p>Independent alumni tracker. The Wolves mark comes from Northwest Athletics.</p></div>
+      <div><b>DATA & SOURCES</b><p>ESPN and official college schedules and box scores. Coverage and update speed vary by school.</p><a href="https://www.gobound.com/ia/schools/northwest">Waukee Northwest rosters ↗</a> · <a href="https://www.waukeeschools.org/news/2019/10/board-approves-mascot-and-colors-for-northwest-high-school/">School branding ↗</a></div>
+    </footer>
+  </main>
+  <script id="initial-data" type="application/json">{{ data|tojson }}</script>
+</body>
+</html>
