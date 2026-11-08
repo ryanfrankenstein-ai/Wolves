@@ -26,6 +26,11 @@
       "schedule": "https://nwcraiders.com/sports/mens-basketball/schedule/2026-27",
       "stats": "https://nwcraiders.com/sports/mens-basketball/stats"
     },
+    "grand-view": {
+      "name": "Grand View", "level": "NAIA", "program": "Men’s",
+      "schedule": "https://gvvikings.com/sports/mens-basketball/schedule/2026-27",
+      "stats": "https://gvvikings.com/sports/mens-basketball/stats"
+    },
     "nw-missouri-state": {
       "name": "Northwest Missouri State", "level": "NCAA Division II", "program": "Women’s",
       "schedule": "https://bearcatsports.com/sports/womens-basketball/schedule/2026-27",
@@ -46,6 +51,7 @@
     {"name": "Sadie Maas", "team": "nw-missouri-state", "position": "Forward", "number": "32", "bio": "https://bearcatsports.com/sports/womens-basketball/roster/sadie-maas/11081"},
     {"name": "Aliyah Al-Hameed", "team": "nw-missouri-state", "position": "Guard", "number": "12", "archive": "2024–25", "bio": "https://bearcatsports.com/sports/womens-basketball/roster/aliyah-al-hameed/9978"},
     {"name": "Vana Bilic", "team": "winona-state", "position": "Guard", "number": "5", "bio": "https://winonastatewarriors.com/roster.aspx?path=wbball&season=2026-27"},
-    {"name": "Grant Tigges", "team": "northwestern", "position": "Forward", "number": "25", "bio": "https://nwcraiders.com/sports/mens-basketball/roster/grant-tigges/16094"}
+    {"name": "Grant Tigges", "team": "northwestern", "position": "Forward", "number": "25", "bio": "https://nwcraiders.com/sports/mens-basketball/roster/grant-tigges/16094"},
+    {"name": "Luke Hart", "team": "grand-view", "position": "Guard", "number": "10", "bio": "https://gvvikings.com/sports/mens-basketball/roster/luke-hart/15612"}
   ]
 }

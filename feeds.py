@@ -4,6 +4,7 @@ from functools import lru_cache
 import json
 import re
 from urllib.parse import urljoin
+from urllib.error import URLError
 from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
 
@@ -209,7 +210,11 @@ def official_lines(url):
 
 
 def read_official(team, names):
-    soup = BeautifulSoup(fetch(team["schedule"]), "html.parser")
+    try:
+        source = fetch(team["schedule"])
+    except (TimeoutError, URLError):
+        source = fetch(team["schedule"])
+    soup = BeautifulSoup(source, "html.parser")
     rows = soup.select(".sidearm-schedule-game")
     if not rows:
         raise ValueError("Official schedule layout was not recognized")

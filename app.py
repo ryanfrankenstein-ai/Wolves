@@ -34,6 +34,9 @@ def refresh():
             try:
                 result = read_team(team, [p["name"] for p in PLAYERS if p["team"] == key and not p.get("archive")])
                 with lock:
+                    previous = cache.get(key, {})
+                    if result.get("partial") and previous.get("players"):
+                        result["players"] = {**previous["players"], **result["players"]}
                     cache[key] = {**result, "delayed": False, "checked": datetime.now(timezone.utc).isoformat()}
             except Exception:
                 logging.exception("Could not update %s", team["name"])
@@ -45,7 +48,8 @@ def refresh():
     finally:
         with lock:
             live = any(game["state"] == "in" for result in cache.values() for game in result.get("games", []))
-            next_check = time.monotonic() + (25 if live else 70)
+            delayed = any(result["delayed"] for result in cache.values())
+            next_check = time.monotonic() + (25 if live or delayed else 70)
             checking = False
 
 
