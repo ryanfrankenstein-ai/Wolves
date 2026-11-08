@@ -51,6 +51,19 @@ def espn_matchup(participants, state):
     return teams
 
 
+def broadcast_names(competition):
+    names = []
+    for broadcast in competition.get("broadcasts", []) + competition.get("geoBroadcasts", []):
+        if broadcast.get("region") not in (None, "", "us"):
+            continue
+        kind = broadcast.get("type", {}).get("shortName")
+        if kind and kind.casefold() not in {"tv", "streaming"}:
+            continue
+        label = broadcast.get("media", {}).get("shortName")
+        names.extend([label] if label else broadcast.get("names", []))
+    return list(dict.fromkeys(name.strip() for name in names if name and name.strip()))
+
+
 def espn_event(event):
     competition = event["competitions"][0]
     participants = competition["competitors"]
@@ -65,6 +78,7 @@ def espn_event(event):
         "state": status["state"], "status": status.get("shortDetail") or status.get("description"),
         "url": f"https://www.espn.com/mens-college-basketball/game/_/gameId/{event['id']}",
         "score": score_line(matchup), "matchup": matchup,
+        "broadcasts": broadcast_names(competition),
         "exhibition": any("exhibition" in note.get("headline", "").lower() for note in competition.get("notes", [])),
     }
 
@@ -76,6 +90,8 @@ def espn_lines(base, game, team_id):
     competitions = summary.get("header", {}).get("competitions", [])
     if competitions:
         competition = competitions[0]
+        if not game["broadcasts"]:
+            game["broadcasts"] = broadcast_names(competition)
         scores = {str(p["team"]["id"]): p.get("score") for p in competition.get("competitors", [])}
         for team in game["matchup"]:
             if scores.get(team["id"]) is not None:
@@ -184,6 +200,9 @@ def official_event(row, team):
     result = detail.get_text(" ", strip=True) if detail else ""
     box = row.select_one(".sidearm-schedule-game-links-boxscore a[href]")
     live = row.select_one(".sidearm-schedule-game-links-stats a[href], a[aria-label^='Live stats' i]")
+    video = row.select_one(".sidearm-schedule-game-links-video a[href]")
+    video_url = urljoin(team["schedule"], video["href"]) if video else ""
+    channels = [node.get_text(" ", strip=True) for node in row.select(".sidearm-schedule-game-coverage-tv-content, .sidearm-schedule-game-tv")]
     score = re.search(r"\d+\s*[-–]\s*\d+", result)
     done = "sidearm-schedule-game-completed" in row.get("class", [])
     scheduled = not (done or score)
@@ -212,6 +231,8 @@ def official_event(row, team):
             "state": "pre" if scheduled else "post", "status": "Scheduled" if scheduled else "Final",
             "url": urljoin(team["schedule"], href) if href else team["schedule"],
             "score": score[0] if score else "", "matchup": matchup,
+            "broadcasts": list(dict.fromkeys(channel.removeprefix("TV:").strip() for channel in channels if channel)),
+            "watch_url": video_url if video and video["href"].strip() not in ("", "#") and urlsplit(video_url).scheme == "https" else "",
             "box": urljoin(team["schedule"], box["href"]) if box else "",
             "exhibition": "exhibition" in row.get_text(" ", strip=True).lower()}
 

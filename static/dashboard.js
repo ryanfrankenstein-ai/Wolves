@@ -53,11 +53,17 @@ function gameCard(game, {showDate = false, showPlayers = false, showStats = fals
   const matchup = game.matchup?.length === 2 ? game.matchup : null;
   const label = game.state === "pre" ? game.time : [game.status, !matchup && game.score].filter(Boolean).join(" · ");
   const gameLink = game.state === "post" ? "Box score" : game.state === "in" ? "Live game" : "Game details";
+  const channels = (game.broadcasts || []).filter(Boolean);
+  const watch = /^https:\/\//i.test(game.watch_url || "") ? link(game.watch_url, "Watch stream", game.name) : "";
   return `<article class="game ${game.state === "in" ? "is-live" : ""}">
     <div class="game-meta"><span>${escape(showDate ? date(game.date) + " · " + label : label)}</span>
     ${game.delayed ? "<span>Delayed</span>" : ""}</div>
     ${matchup ? `<div class="matchup">${matchup.map((team) => gameTeam(team, game, showPlayers, showStats)).join("")}</div>
       <div class="game-link">${link(game.url, gameLink, game.name)}</div>` : link(game.url, game.name)}
+    ${channels.length || watch ? `<div class="game-broadcast">
+      ${channels.length ? `<span class="broadcast-label">TV / Stream</span> <span>${escape(channels.join(" · "))}</span>` : ""}
+      ${watch}
+    </div>` : ""}
   </article>`;
 }
 

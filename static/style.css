@@ -42,6 +42,9 @@ h1 em {color:#dce6ff;font-style:normal}
 .matchup-team span {flex:1}
 .matchup-team b {font-variant-numeric:tabular-nums}
 .game .game-link a {font-size:11px;color:var(--light);font-weight:600;margin-top:8px}
+.game-broadcast {display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 7px;border-top:1px solid var(--line);padding-top:7px;margin-top:6px;color:var(--silver);font-size:12px}
+.broadcast-label {color:var(--muted);font-size:11px;font-weight:700}
+.game .game-broadcast a {color:var(--light);font-size:12px;margin:0}
 .game-players {list-style:none;margin:3px 0;padding:0;color:var(--light)}
 .game-players li + li {margin-top:4px}
 .game-player {display:flex;align-items:center;gap:7px;padding-left:32px;font-size:12px;font-weight:600}

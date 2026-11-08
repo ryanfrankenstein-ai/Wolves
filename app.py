@@ -87,7 +87,10 @@ def dashboard():
             if current_freshness < freshness:
                 previous, current = current, previous
             lines = {**previous.get("lines", {}), **current.get("lines", {})}
-            games[game["id"]] = ({**current, "lines": lines}, max(freshness, current_freshness))
+            games[game["id"]] = ({**current, "lines": lines,
+                                  "broadcasts": current.get("broadcasts") or previous.get("broadcasts", []),
+                                  "watch_url": current.get("watch_url") or previous.get("watch_url", "")},
+                                 max(freshness, current_freshness))
     ordered = sorted((game for game, _ in games.values()), key=lambda game: game["start"])
     players = []
     for player in PLAYERS:
