@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from functools import lru_cache
 import json
 import re
-from urllib.parse import urljoin
+from urllib.parse import quote, urljoin
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
@@ -34,11 +34,21 @@ def game_date(value):
     return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(CT)
 
 
-def score_line(participants):
-    ordered = sorted(participants, key=lambda participant: participant["homeAway"] == "home")
-    scores = [p.get("score") for p in ordered]
-    scores = [score.get("displayValue") if isinstance(score, dict) else score for score in scores]
+def score_line(teams):
+    scores = [team.get("score") for team in teams]
     return " – ".join(map(str, scores)) if len(scores) == 2 and None not in scores else ""
+
+
+def espn_matchup(participants, state):
+    teams = []
+    for participant in sorted(participants, key=lambda entry: entry["homeAway"] == "home"):
+        school = participant["team"]
+        score = participant.get("score")
+        logos = school.get("logos") or []
+        teams.append({"id": str(school["id"]), "name": school["displayName"],
+                      "logo": school.get("logo") or (logos[0].get("href") if logos else None),
+                      "score": (score.get("displayValue") if isinstance(score, dict) else score) if state != "pre" else None})
+    return teams
 
 
 def espn_event(event):
@@ -47,13 +57,14 @@ def espn_event(event):
     status = (competition.get("status") or event["status"])["type"]
     start = game_date(competition.get("date") or event["date"])
     name = event.get("name") or " vs ".join(p["team"]["displayName"] for p in participants)
+    matchup = espn_matchup(participants, status["state"])
     return {
         "id": f"espn-{event['id']}", "event": event["id"], "name": name,
         "date": start.date().isoformat(), "start": start.isoformat(),
         "time": start.strftime("%I:%M %p CT").lstrip("0") if competition.get("timeValid", True) else "Time TBD",
         "state": status["state"], "status": status.get("shortDetail") or status.get("description"),
         "url": f"https://www.espn.com/mens-college-basketball/game/_/gameId/{event['id']}",
-        "score": score_line(participants),
+        "score": score_line(matchup), "matchup": matchup,
         "exhibition": any("exhibition" in note.get("headline", "").lower() for note in competition.get("notes", [])),
     }
 
@@ -65,7 +76,11 @@ def espn_lines(base, game, team_id):
     competitions = summary.get("header", {}).get("competitions", [])
     if competitions:
         competition = competitions[0]
-        game["score"] = score_line(competition.get("competitors", [])) or game["score"]
+        scores = {str(p["team"]["id"]): p.get("score") for p in competition.get("competitors", [])}
+        for team in game["matchup"]:
+            if scores.get(team["id"]) is not None:
+                team["score"] = scores[team["id"]]
+        game["score"] = score_line(game["matchup"]) or game["score"]
         status = competition.get("status", {}).get("type", {})
         if status.get("state") == "in":
             game["status"] = status.get("shortDetail") or game["status"]
@@ -182,13 +197,20 @@ def official_event(row, team):
         day = day.replace(hour=tip.hour, minute=tip.minute)
     event_name = opponent.get_text(" ", strip=True)
     marker = "at" if "sidearm-schedule-away-game" in row["class"] else "vs."
+    opponent_image = row.select_one(".sidearm-schedule-game-opponent-logo img")
+    image_url = (opponent_image.get("data-src") or opponent_image.get("src")) if opponent_image else None
+    opponent_logo = quote(urljoin(team["schedule"], image_url), safe=":/?&=%") if image_url else None
+    points = re.findall(r"\d+", score[0]) if score else [None, None]
+    matchup = [{"name": team["name"], "logo": f"/static/{team['logo']}" if team.get("logo") else None, "score": points[0]},
+               {"name": event_name, "logo": opponent_logo, "score": points[1]}]
     return {"id": f"{team['name']}-{team['program']}-{row.get('data-game-id', day.isoformat())}",
             "name": f"{team['name']} {marker} {event_name}",
             "date": day.date().isoformat(), "start": day.isoformat(),
             "time": day.strftime("%I:%M %p").lstrip("0") + " CT" if time_match else "See schedule",
             "state": "pre" if scheduled else "post", "status": "Scheduled" if scheduled else "Final",
             "url": urljoin(team["schedule"], href) if href else team["schedule"],
-            "score": score[0] if score else "", "box": urljoin(team["schedule"], box["href"]) if box else "",
+            "score": score[0] if score else "", "matchup": matchup,
+            "box": urljoin(team["schedule"], box["href"]) if box else "",
             "exhibition": "exhibition" in row.get_text(" ", strip=True).lower()}
 
 

@@ -2,56 +2,64 @@
   "season": "2026–27",
   "teams": {
     "nebraska": {
+      "logo": "media/logo-nebraska.webp",
       "name": "Nebraska", "level": "NCAA Division I", "program": "Men’s", "espn": 158,
       "schedule": "https://huskers.com/sports/mens-basketball/schedule",
       "stats": "https://huskers.com/sports/mens-basketball/stats"
     },
     "iowa": {
+      "logo": "media/logo-iowa.webp",
       "name": "Iowa", "level": "NCAA Division I", "program": "Men’s", "espn": 2294,
       "schedule": "https://hawkeyesports.com/sports/mbball/schedule",
       "stats": "https://hawkeyesports.com/sports/mbball/stats"
     },
     "south-dakota": {
+      "logo": "media/logo-south-dakota.svg",
       "name": "South Dakota", "level": "NCAA Division I", "program": "Men’s", "espn": 233,
       "schedule": "https://goyotes.com/sports/mens-basketball/schedule",
       "stats": "https://goyotes.com/sports/mens-basketball/stats"
     },
     "illinois": {
+      "logo": "media/logo-illinois.svg",
       "name": "Illinois", "level": "NCAA Division I", "program": "Men’s", "espn": 356,
       "schedule": "https://fightingillini.com/sports/mens-basketball/schedule",
       "stats": "https://fightingillini.com/sports/mens-basketball/stats"
     },
     "northwestern": {
+      "logo": "media/logo-northwestern.svg",
       "name": "Northwestern College", "level": "NAIA", "program": "Men’s",
       "schedule": "https://nwcraiders.com/sports/mens-basketball/schedule/2026-27",
       "stats": "https://nwcraiders.com/sports/mens-basketball/stats"
     },
     "grand-view": {
+      "logo": "media/logo-grand-view.svg",
       "name": "Grand View", "level": "NAIA", "program": "Men’s",
       "schedule": "https://gvvikings.com/sports/mens-basketball/schedule/2026-27",
       "stats": "https://gvvikings.com/sports/mens-basketball/stats"
     },
     "nw-missouri-state": {
+      "logo": "media/logo-nw-missouri-state.svg",
       "name": "Northwest Missouri State", "level": "NCAA Division II", "program": "Women’s",
       "schedule": "https://bearcatsports.com/sports/womens-basketball/schedule/2026-27",
       "stats": "https://bearcatsports.com/sports/womens-basketball/stats"
     },
     "winona-state": {
+      "logo": "media/logo-winona-state.webp",
       "name": "Winona State", "level": "NCAA Division II", "program": "Women’s",
       "schedule": "https://winonastatewarriors.com/sports/womens-basketball/schedule/2026-27",
       "stats": "https://winonastatewarriors.com/sports/womens-basketball/stats"
     }
   },
   "players": [
-    {"name": "Pryce Sandfort", "team": "nebraska", "position": "Forward", "number": "21", "previous": ["Iowa"], "bio": "https://huskers.com/sports/mens-basketball/roster/player/pryce-sandfort"},
-    {"name": "Colin Rice", "team": "nebraska", "position": "Guard / Forward", "number": "4", "bio": "https://huskers.com/sports/mens-basketball/roster/player/colin-rice"},
-    {"name": "Peyton McCollum", "team": "iowa", "position": "Guard", "number": "5", "bio": "https://hawkeyesports.com/sports/mbball/roster/player/peyton-mccollum"},
-    {"name": "Cade Kelderman", "team": "south-dakota", "position": "Guard", "number": "2", "previous": ["Iowa State"], "bio": "https://goyotes.com/news/2026/4/16/mens-basketball-south-dakota-adds-cade-kelderman-to-2026-27-roster.aspx"},
-    {"name": "Landon Davis", "team": "illinois", "position": "Forward", "number": "27", "bio": "https://fightingillini.com/sports/mens-basketball/roster/landon-davis/15985"},
-    {"name": "Sadie Maas", "team": "nw-missouri-state", "position": "Forward", "number": "32", "bio": "https://bearcatsports.com/sports/womens-basketball/roster/sadie-maas/11081"},
-    {"name": "Aliyah Al-Hameed", "team": "nw-missouri-state", "position": "Guard", "number": "12", "archive": "2024–25", "bio": "https://bearcatsports.com/sports/womens-basketball/roster/aliyah-al-hameed/9978"},
-    {"name": "Vana Bilic", "team": "winona-state", "position": "Guard", "number": "5", "bio": "https://winonastatewarriors.com/roster.aspx?path=wbball&season=2026-27"},
-    {"name": "Grant Tigges", "team": "northwestern", "position": "Forward", "number": "25", "bio": "https://nwcraiders.com/sports/mens-basketball/roster/grant-tigges/16094"},
-    {"name": "Luke Hart", "team": "grand-view", "position": "Guard", "number": "10", "bio": "https://gvvikings.com/sports/mens-basketball/roster/luke-hart/15612"}
+    {"name": "Pryce Sandfort", "photo": "media/player-pryce-sandfort.webp", "team": "nebraska", "position": "Forward", "number": "21", "previous": ["Iowa"], "bio": "https://huskers.com/sports/mens-basketball/roster/player/pryce-sandfort"},
+    {"name": "Colin Rice", "photo": "media/player-colin-rice.webp", "team": "nebraska", "position": "Guard / Forward", "number": "4", "bio": "https://huskers.com/sports/mens-basketball/roster/player/colin-rice"},
+    {"name": "Peyton McCollum", "photo": "media/player-peyton-mccollum.webp", "team": "iowa", "position": "Guard", "number": "5", "bio": "https://hawkeyesports.com/sports/mbball/roster/player/peyton-mccollum"},
+    {"name": "Cade Kelderman", "photo": "media/player-cade-kelderman.webp", "team": "south-dakota", "position": "Guard", "number": "2", "previous": ["Iowa State"], "bio": "https://goyotes.com/sports/mens-basketball/roster/cade-kelderman/14661"},
+    {"name": "Landon Davis", "photo": "media/player-landon-davis.webp", "team": "illinois", "position": "Forward", "number": "27", "bio": "https://fightingillini.com/sports/mens-basketball/roster/landon-davis/15985"},
+    {"name": "Sadie Maas", "photo": "media/player-sadie-maas.webp", "team": "nw-missouri-state", "position": "Forward", "number": "32", "bio": "https://bearcatsports.com/sports/womens-basketball/roster/sadie-maas/11081"},
+    {"name": "Aliyah Al-Hameed", "photo": "media/player-aliyah-al-hameed.webp", "team": "nw-missouri-state", "position": "Guard", "number": "12", "archive": "2024–25", "bio": "https://bearcatsports.com/sports/womens-basketball/roster/aliyah-al-hameed/9978"},
+    {"name": "Vana Bilic", "photo": "media/player-vana-bilic.webp", "team": "winona-state", "position": "Guard", "number": "5", "bio": "https://winonastatewarriors.com/sports/womens-basketball/roster/vana-bilic/16074"},
+    {"name": "Grant Tigges", "photo": "media/player-grant-tigges.webp", "team": "northwestern", "position": "Forward", "number": "25", "bio": "https://nwcraiders.com/sports/mens-basketball/roster/grant-tigges/16094"},
+    {"name": "Luke Hart", "photo": "media/player-luke-hart.webp", "team": "grand-view", "position": "Guard", "number": "10", "bio": "https://gvvikings.com/sports/mens-basketball/roster/luke-hart/15612"}
   ]
 }

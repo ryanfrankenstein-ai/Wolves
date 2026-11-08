@@ -22,3 +22,5 @@ Update `roster.json` when an alumnus joins a new program, transfers, or finishes
 ESPN team schedules and box scores power the Division I panels. Official school schedules and published box scores provide Division II and NAIA coverage, with links to the school's own live stats when present. Season averages are derived from available box scores. Missing stats stay blank and incomplete box-score coverage is labeled. In-memory caching shares requests among visitors and retains the latest successful team response through transient failures.
 
 Logo asset from [Waukee Northwest Football](https://www.waukeenwfb.com/). The [Waukee Community School District](https://www.waukeeschools.org/news/2019/10/board-approves-mascot-and-colors-for-northwest-high-school/) documents the school colors and mascot.
+
+Player portraits are from the official college roster pages linked in `roster.json`. Aliyah Al-Hameed’s photo comes from the 2024–25 roster archive. Tracked college marks are from their athletics sites and the ESPN team feed. Store portraits and college marks in `static/media` and reference those files in `roster.json`. Opponent logos come from the relevant schedule feed.

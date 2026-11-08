@@ -8,7 +8,7 @@ import threading
 import time
 from zoneinfo import ZoneInfo
 
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, url_for
 
 from feeds import read_team
 
@@ -79,6 +79,8 @@ def dashboard():
         team = TEAMS[player["team"]]
         players.append({**player, **line, "school": team["name"], "level": team["level"],
                         "program": team["program"], "schedule": team.get("schedule"), "stats_url": team.get("stats"),
+                        "portrait": url_for("static", filename=player["photo"]) if player.get("photo") else None,
+                        "team_logo": url_for("static", filename=team["logo"]) if team.get("logo") else None,
                         "delayed": result.get("delayed", False)})
     players.sort(key=lambda player: player.get("last", {}).get("start", ""), reverse=True)
     return {"players": players, "today": sorted(games.values(), key=lambda g: g["start"]),

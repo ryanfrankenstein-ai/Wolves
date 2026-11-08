@@ -15,9 +15,15 @@ function date(value) {
     .format(new Date(value + "T12:00:00Z")) : "";
 }
 
-function link(url, label) {
+function link(url, label, detail = "") {
   if (!/^https:\/\//i.test(url || "")) return escape(label);
-  return `<a href="${escape(url)}" target="_blank" rel="noopener noreferrer">${escape(label)} ↗</a>`;
+  const accessibleName = detail ? ` aria-label="${escape(label)} · ${escape(detail)}"` : "";
+  return `<a href="${escape(url)}" target="_blank" rel="noopener noreferrer"${accessibleName}>${escape(label)} ↗</a>`;
+}
+
+function image(url, className, width, height) {
+  if (!/^(?:\/static\/media\/|https:\/\/)/i.test(url || "")) return "";
+  return `<img class="${className}" src="${escape(url)}" alt="" width="${width}" height="${height}" loading="lazy" decoding="async">`;
 }
 
 function tiles(stats, fields, extraClass = "") {
@@ -31,14 +37,21 @@ function statsBlock(stats, shooting = true) {
 }
 
 function gameCard(game, showDate, showPlayers) {
-  const label = game.state === "pre" ? game.time : [game.status, game.score].filter(Boolean).join(" · ");
+  const matchup = game.matchup?.length === 2 ? game.matchup : null;
+  const label = game.state === "pre" ? game.time : [game.status, !matchup && game.score].filter(Boolean).join(" · ");
+  const gameLink = game.state === "post" ? "Box score" : game.state === "in" ? "Live game" : "Game details";
   const lines = Object.entries(game.lines || {});
   return `<article class="game ${game.state === "in" ? "is-live" : ""}">
     <div class="game-meta"><span>${escape(showDate ? date(game.date) + " · " + label : label)}</span>
     ${game.delayed ? "<span>Delayed</span>" : ""}</div>
-    ${link(game.url, game.name)}
-    ${showPlayers ? lines.map(([name, stats]) =>
-      `<p class="block-title">${escape(name)}</p>${statsBlock(stats)}`).join("") : ""}
+    ${matchup ? `<div class="matchup">${matchup.map((team) => `<div class="matchup-team">
+      ${image(team.logo, "team-mark", 24, 24)}<span>${escape(team.name)}</span>
+      ${team.score != null ? `<b>${escape(team.score)}</b>` : ""}</div>`).join("")}</div>
+      <div class="game-link">${link(game.url, gameLink, game.name)}</div>` : link(game.url, game.name)}
+    ${showPlayers ? lines.map(([name, stats]) => {
+      const player = data.players.find((entry) => entry.name === name);
+      return `<p class="block-title live-player">${image(player?.portrait, "live-portrait", 30, 30)}${escape(name)}</p>${statsBlock(stats)}`;
+    }).join("") : ""}
   </article>`;
 }
 
@@ -47,8 +60,10 @@ function playerCard(player) {
   const last = player.last;
   return `<article class="player-card">
     <header class="player-head">
-      <div><p class="eyebrow">${escape(player.level)} · ${escape(player.program)}</p>
-      <h3>${escape(player.name)}</h3><p>${escape(player.school)} · ${escape(player.position)}</p></div>
+      ${image(player.portrait, "portrait", 72, 86)}
+      <div class="player-identity"><p class="eyebrow">${escape(player.level)} · ${escape(player.program)}</p>
+      <h3>${escape(player.name)}</h3><p class="player-school">${image(player.team_logo, "team-mark", 22, 22)}
+      <span>${escape(player.school)} · ${escape(player.position)}</span></p></div>
       <span class="number">#${escape(player.number)}</span>
     </header>
     <div class="player-body">
@@ -121,6 +136,9 @@ async function refresh() {
 }
 
 filters.forEach((control) => control.addEventListener("input", renderPlayers));
+document.addEventListener("error", (event) => {
+  if (event.target instanceof HTMLImageElement) event.target.hidden = true;
+}, true);
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) clearTimeout(timer);
   else refresh();

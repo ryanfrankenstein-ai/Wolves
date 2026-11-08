@@ -54,7 +54,13 @@
       <div id="player-grid" class="player-grid">
         {% for player in data.players %}
         <article class="player-card">
-          <header class="player-head"><div><p class="eyebrow">{{ player.level }} · {{ player.program }}</p><h3>{{ player.name }}</h3><p>{{ player.school }} · {{ player.position }}</p></div><span class="number">#{{ player.number }}</span></header>
+          <header class="player-head">
+            {% if player.portrait %}<img class="portrait" src="{{ player.portrait }}" alt="" width="72" height="86" loading="lazy" decoding="async">{% endif %}
+            <div class="player-identity"><p class="eyebrow">{{ player.level }} · {{ player.program }}</p><h3>{{ player.name }}</h3>
+              <p class="player-school">{% if player.team_logo %}<img class="team-mark" src="{{ player.team_logo }}" alt="" width="22" height="22" loading="lazy" decoding="async">{% endif %}<span>{{ player.school }} · {{ player.position }}</span></p>
+            </div>
+            <span class="number">#{{ player.number }}</span>
+          </header>
           <div class="player-body"><p class="empty">Game and season stats appear as sources publish them.</p><a href="{{ player.bio }}">Official player bio ↗</a></div>
         </article>
         {% endfor %}
@@ -62,7 +68,7 @@
     </section>
     <footer id="sources">
       <div><b>WAUKEE NORTHWEST</b><p>Independent alumni tracker. The Wolves mark comes from Northwest Athletics.</p></div>
-      <div><b>DATA & SOURCES</b><p>ESPN and official college schedules and box scores. Coverage and update speed vary by school.</p><a href="https://www.gobound.com/ia/schools/northwest">Waukee Northwest rosters ↗</a> · <a href="https://www.waukeeschools.org/news/2019/10/board-approves-mascot-and-colors-for-northwest-high-school/">School branding ↗</a></div>
+      <div><b>DATA & SOURCES</b><p>Scores and logos from ESPN and college athletics. Player portraits come from the official rosters linked on each card. Coverage varies by school.</p><a href="https://www.gobound.com/ia/schools/northwest">Waukee Northwest rosters ↗</a> · <a href="https://www.waukeeschools.org/news/2019/10/board-approves-mascot-and-colors-for-northwest-high-school/">School branding ↗</a></div>
     </footer>
   </main>
   <script id="initial-data" type="application/json">{{ data|tojson }}</script>
