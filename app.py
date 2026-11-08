@@ -9,7 +9,7 @@ import time
 from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
-from flask import Flask, jsonify, render_template, url_for
+from flask import Flask, jsonify, render_template, request, url_for
 
 from feeds import read_team
 
@@ -24,38 +24,50 @@ TEAM_BY_NAME = {team["name"].casefold(): key for key, team in TEAMS.items()}
 TEAM_BY_HOST = {urlsplit(team["schedule"]).hostname.removeprefix("www."): key for key, team in TEAMS.items()}
 ACTIVE_NAMES = {key: [player["name"] for player in PLAYERS if player["team"] == key and not player.get("archive")]
                 for key in TEAMS}
+TRACKED_TEAMS = [key for key, team in TEAMS.items() if team.get("active", True)]
 lock = threading.Lock()
 cache = {}
 checking = False
-next_check = 0
+next_checks = {}
 
 
-def refresh():
-    global checking, next_check
+def check_interval(team, result, now):
+    recent = (now.date() - timedelta(days=1)).isoformat()
+    games = result.get("games", [])
+    if any(game["state"] == "in" and game["date"] >= recent for game in games):
+        return 25
+    for game in games:
+        if game["state"] == "pre" and game["date"] >= recent:
+            until_tip = (datetime.fromisoformat(game["start"]) - now).total_seconds()
+            if -14400 <= until_tip <= 900:
+                return 30 if team.get("espn") else 60
+    return 60 if result.get("delayed") else 240
+
+
+def refresh(keys):
+    global checking
+
+    def fetch(key):
+        team = TEAMS[key]
+        try:
+            result = read_team(team, ACTIVE_NAMES[key])
+            with lock:
+                previous = cache.get(key, {})
+                if result.get("partial") and previous.get("players"):
+                    result["players"] = {**previous["players"], **result["players"]}
+                cache[key] = {**result, "delayed": False, "checked": datetime.now(timezone.utc).isoformat()}
+        except Exception:
+            logging.exception("Could not update %s", team["name"])
+            with lock:
+                cache[key] = {**cache.get(key, {}), "delayed": True}
+        with lock:
+            next_checks[key] = time.monotonic() + check_interval(team, cache[key], datetime.now(CENTRAL))
+
     try:
-        teams = [(key, team) for key, team in TEAMS.items() if team.get("active", True)]
-
-        def fetch(item):
-            key, team = item
-            try:
-                result = read_team(team, ACTIVE_NAMES[key])
-                with lock:
-                    previous = cache.get(key, {})
-                    if result.get("partial") and previous.get("players"):
-                        result["players"] = {**previous["players"], **result["players"]}
-                    cache[key] = {**result, "delayed": False, "checked": datetime.now(timezone.utc).isoformat()}
-            except Exception:
-                logging.exception("Could not update %s", team["name"])
-                with lock:
-                    cache[key] = {**cache.get(key, {}), "delayed": True}
-
         with ThreadPoolExecutor(max_workers=5) as executor:
-            list(executor.map(fetch, teams))
+            list(executor.map(fetch, keys))
     finally:
         with lock:
-            live = any(game["state"] == "in" for result in cache.values() for game in result.get("games", []))
-            delayed = any(result["delayed"] for result in cache.values())
-            next_check = time.monotonic() + (25 if live or delayed else 70)
             checking = False
 
 
@@ -72,15 +84,20 @@ def dashboard():
     global checking
     now = datetime.now(CENTRAL)
     with lock:
-        if not checking and time.monotonic() >= next_check and not os.environ.get("WOLVES_OFFLINE"):
-            checking = True
-            threading.Thread(target=refresh, daemon=True).start()
+        if not checking and not os.environ.get("WOLVES_OFFLINE"):
+            tick = time.monotonic()
+            due = [key for key in TRACKED_TEAMS if tick >= next_checks.get(key, 0)]
+            if due:
+                checking = True
+                threading.Thread(target=refresh, args=(due,), daemon=True).start()
         data, refreshing = dict(cache), checking
     today = now.date().isoformat()
     yesterday = (now.date() - timedelta(days=1)).isoformat()
     games = {}
     for result in data.values():
         for game in result.get("games", []):
+            if game["date"] < today and not (game["state"] == "in" and game["date"] >= yesterday):
+                continue
             previous, freshness = games.get(game["id"], ({}, (False, "")))
             current_freshness = (not result["delayed"], result.get("checked", ""))
             current = {**game, "delayed": result["delayed"]}
@@ -107,6 +124,7 @@ def dashboard():
             "upcoming": [game for game in ordered if game["date"] >= today and game["state"] == "pre"][:10],
             "live": [game_with_players(game) for game in ordered if game["state"] == "in" and game["date"] >= yesterday],
             "refreshing": refreshing,
+            "ready": all(key in data for key in TRACKED_TEAMS),
             "checked": max((r.get("checked", "") for r in data.values()), default=""),
             "delayed": [TEAMS[key]["name"] for key, result in data.items() if result["delayed"]],
             "date_label": now.strftime("%A, %B %d").replace(" 0", " "),
@@ -120,7 +138,10 @@ def home():
 
 @app.get("/api/dashboard")
 def api_dashboard():
-    return jsonify(dashboard()), 200, {"Cache-Control": "no-store"}
+    response = jsonify(dashboard())
+    response.headers["Cache-Control"] = "private, no-cache"
+    response.add_etag()
+    return response.make_conditional(request)
 
 
 @app.get("/healthz")

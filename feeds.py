@@ -266,7 +266,7 @@ def read_official(team, names):
     games = [game for row in rows if (game := official_event(row, team))]
     if not games:
         raise ValueError("Official schedule dates were not recognized")
-    selected = sorted((game for game in games if game["box"] and not game["exhibition"]),
+    selected = sorted((game for game in games if game["state"] == "post" and game["box"] and not game["exhibition"]),
                       key=lambda game: game["start"])
     result = collect(games, names, selected, lambda game: official_lines(game["box"]))
     if any(game["state"] == "post" and not game["box"] and game["score"] and not game["exhibition"] for game in games):

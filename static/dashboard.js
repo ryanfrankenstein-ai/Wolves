@@ -7,12 +7,18 @@ const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({
 })[ch]);
 const statFields = {pts: "PTS", reb: "REB", ast: "AST", stl: "STL", blk: "BLK", min: "MIN"};
 const shootingFields = {fg: "FG", "3pt": "3PT", ft: "FT"};
+const dateFormat = new Intl.DateTimeFormat("en-US", {month: "short", day: "numeric", timeZone: "UTC"});
+const timeFormat = new Intl.DateTimeFormat("en-US", {
+  hour: "numeric", minute: "2-digit", timeZone: "America/Chicago", timeZoneName: "short"
+});
+const rendered = new Map();
 let data = JSON.parse(get("initial-data").textContent);
 let timer;
+let fetching = false;
+let etag = "";
 
 function date(value) {
-  return value ? new Intl.DateTimeFormat("en-US", {month: "short", day: "numeric", timeZone: "UTC"})
-    .format(new Date(value + "T12:00:00Z")) : "";
+  return value ? dateFormat.format(new Date(value + "T12:00:00Z")) : "";
 }
 
 function link(url, label, detail = "") {
@@ -93,10 +99,9 @@ function playerCard(player) {
 }
 
 function update(id, html) {
-  const node = get(id);
-  if (node.dataset.rendered !== html) {
-    node.innerHTML = html;
-    node.dataset.rendered = html;
+  if (rendered.get(id) !== html) {
+    get(id).innerHTML = html;
+    rendered.set(id, html);
   }
 }
 
@@ -114,8 +119,9 @@ function renderPlayers() {
 
 function render() {
   get("date-label").textContent = data.date_label;
-  const waiting = data.refreshing && !data.checked;
-  const complete = data.checked && !data.delayed.length;
+  const ready = data.ready ?? Boolean(data.checked);
+  const waiting = data.refreshing && !ready;
+  const complete = ready && !data.delayed.length;
   const empty = (message) => `<p class="empty">${message}</p>`;
   update("today-games", data.today.map((game) => gameCard(game, {showPlayers: true})).join("")
     || empty(waiting ? "Checking the college schedules…" : complete ? "No tracked games today." : "No games confirmed yet."));
@@ -123,27 +129,49 @@ function render() {
     || empty(waiting ? "Checking the college schedules…" : "No upcoming games confirmed."));
   update("live-games", data.live.map((game) => gameCard(game, {showPlayers: true, showStats: true})).join("")
     || empty("No tracked games are live right now."));
-  const messages = [];
-  if (data.checked) messages.push("Last checked " + new Intl.DateTimeFormat("en-US", {
-    hour: "numeric", minute: "2-digit", timeZone: "America/Chicago", timeZoneName: "short"
-  }).format(new Date(data.checked)));
-  if (data.delayed.length) messages.push("Updates delayed for " + data.delayed.join(", "));
-  get("feed-status").textContent = messages.join(" · ");
+  renderFeedStatus();
   renderPlayers();
+}
+
+function renderFeedStatus() {
+  const messages = [];
+  if (data.checked) messages.push("Last checked " + timeFormat.format(new Date(data.checked)));
+  if (data.delayed.length) messages.push("Updates delayed for " + data.delayed.join(", "));
+  const status = get("feed-status");
+  const message = messages.join(" · ");
+  if (status.textContent !== message) status.textContent = message;
+}
+
+function refreshDelay() {
+  if (data.refreshing) return 4000;
+  const now = Date.now();
+  const nearTip = data.today.some((game) => {
+    const untilTip = Date.parse(game.start) - now;
+    return game.state === "pre" && untilTip >= -14400000 && untilTip <= 900000;
+  });
+  return data.live.length || nearTip ? 15000 : 45000;
 }
 
 async function refresh() {
   clearTimeout(timer);
-  if (document.hidden) return;
+  if (document.hidden || fetching) return;
+  fetching = true;
   try {
-    const response = await fetch("/api/dashboard", {cache: "no-store"});
+    const headers = etag ? {"If-None-Match": etag} : {};
+    const response = await fetch("/api/dashboard", {cache: "no-store", headers});
+    if (response.status === 304) {
+      renderFeedStatus();
+      return;
+    }
     if (!response.ok) throw new Error("Dashboard unavailable");
     data = await response.json();
+    etag = response.headers.get("ETag") || "";
     render();
   } catch {
     get("feed-status").textContent = "Dashboard update delayed. Showing the most recent available data.";
   } finally {
-    if (!document.hidden) timer = setTimeout(refresh, data.refreshing ? 4000 : data.live.length ? 15000 : 30000);
+    fetching = false;
+    if (!document.hidden) timer = setTimeout(refresh, refreshDelay());
   }
 }
 
@@ -156,4 +184,4 @@ document.addEventListener("visibilitychange", () => {
   else refresh();
 });
 render();
-timer = setTimeout(refresh, 2500);
+timer = setTimeout(refresh, data.refreshing ? 2500 : refreshDelay());
