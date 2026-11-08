@@ -47,11 +47,11 @@ h1 em {color:#dce6ff;font-style:normal}
 .game .game-broadcast a {color:var(--light);font-size:12px;margin:0}
 .game-players {list-style:none;margin:3px 0;padding:0;color:var(--light)}
 .game-players li + li {margin-top:4px}
-.game-player {display:flex;align-items:center;gap:7px;padding-left:32px;font-size:12px;font-weight:600}
-.live-portrait {object-fit:cover;object-position:center 26%;border-radius:50%;background:#1c2c4f}
-.game .stat-grid {margin:7px 0 10px}
-.game .stat {padding:5px 2px}
-.game .stat b {font-size:14px}
+.game-player {padding-left:32px;font-size:12px;font-weight:600}
+.live-games {display:grid;gap:16px}
+.live-game {display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%, 300px),1fr));gap:12px;align-items:start}
+.live-game > * {width:100%;max-width:380px}
+.live-card .stat {padding-inline:2px}
 .feed-status {margin-top:9px}
 .feed-status:empty {display:none}
 .signal {display:inline-block;width:10px;height:10px;border-radius:50%;background:#7492ff;box-shadow:0 0 12px #7492ff8f;vertical-align:middle;margin:0 10px 6px 1px}
@@ -79,6 +79,21 @@ input::placeholder {color:#a9b6ce}
 .stat span {display:block;color:var(--muted);font-size:9px;font-weight:800;letter-spacing:.05em}
 .stat-grid.shooting b {font-size:13px}
 .links {display:flex;flex-wrap:wrap;gap:8px 12px;border-top:1px solid var(--line);padding-top:9px}
+.coach-section {margin-bottom:28px}
+.coach-layout {display:grid;grid-template-columns:minmax(0, 1.45fr) minmax(0, 1fr);gap:24px;align-items:start}
+.coach-profile {display:grid;grid-template-columns:clamp(96px, 28%, 160px) 1fr;gap:16px}
+.coach-photo {margin:0}
+.coach-photo img {display:block;width:100%;height:auto;border-radius:9px}
+.coach-photo figcaption {margin-top:6px;color:var(--muted);font-size:11px}
+.coach-bio {display:grid;gap:9px;font-size:13px;color:var(--silver)}
+.coach-links {display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px}
+.coach-record {min-width:0;border:1px solid var(--line);border-radius:10px;background:#131f36;padding:10px 13px}
+.coach-record table {width:100%;border-collapse:collapse;text-align:left;font-size:12px}
+.coach-record caption {text-align:left;font-weight:800;color:var(--silver);margin-bottom:6px}
+.coach-record th,.coach-record td {padding:5px 6px 5px 0;border-bottom:1px solid var(--line)}
+.coach-record thead {color:var(--muted)}
+.coach-record td:nth-child(2) {white-space:nowrap;font-variant-numeric:tabular-nums}
+.coach-record tfoot th,.coach-record tfoot td {border-bottom:0;font-weight:800}
 footer {display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid var(--line);padding:20px 0 40px;color:var(--muted);font-size:12px}
 footer b {color:var(--silver);letter-spacing:.1em;font-size:11px}
 footer p {margin:5px 0}
@@ -94,6 +109,7 @@ footer p {margin:5px 0}
   .panel {padding:15px}
   .filters {grid-template-columns:1fr 1fr}
   .filters input {grid-column:1/-1}
+  .coach-layout {grid-template-columns:1fr;gap:16px}
 }
 @media (max-width:420px) {.hero-mark {position:absolute;right:14px;top:13px;width:39px}.hero .eyebrow {padding-right:32px}.brand {letter-spacing:0}footer {grid-template-columns:1fr}.stat b {font-size:14px}}
 @media (prefers-reduced-motion:reduce) {html {scroll-behavior:auto}}

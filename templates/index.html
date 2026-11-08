@@ -13,7 +13,7 @@
   <header class="masthead">
     <div class="wrap topbar">
       <a class="brand" href="/"><img src="{{ url_for('static', filename='wolves.png') }}" alt="" width="42" height="42"> Waukee Northwest</a>
-      <nav aria-label="Dashboard"><a href="#today">Scores</a><a href="#players">Players</a><a href="#sources">Sources</a></nav>
+      <nav aria-label="Dashboard"><a href="#today">Scores</a><a href="#players">Players</a><a href="#coach">Coach</a><a href="#sources">Sources</a></nav>
     </div>
   </header>
   <main class="wrap">
@@ -35,7 +35,7 @@
 
     <section id="live" aria-labelledby="live-heading" class="panel">
       <div class="section-head"><div><p class="eyebrow">GAME DAY</p><h2 id="live-heading"><span class="signal"></span>Wolves Live</h2></div><span class="date">Player box scores</span></div>
-      <div class="game-grid" id="live-games"><p class="empty">Live player lines appear when a scoring feed provides them.</p></div>
+      <div class="live-games" id="live-games"><p class="empty">Live player lines appear when a scoring feed provides them.</p></div>
     </section>
 
     <section id="upcoming" aria-labelledby="upcoming-heading" class="panel">
@@ -64,6 +64,37 @@
           <div class="player-body"><p class="empty">Game and season stats appear as sources publish them.</p><a href="{{ player.bio }}">Official player bio ↗</a></div>
         </article>
         {% endfor %}
+      </div>
+    </section>
+    <section id="coach" aria-labelledby="coach-heading" class="panel coach-section">
+      <div class="section-head"><div><p class="eyebrow">WAUKEE NORTHWEST BOYS’ BASKETBALL</p><h2 id="coach-heading">Meet Coach Brett Watson</h2></div></div>
+      <div class="coach-layout">
+        <div class="coach-profile">
+          <figure class="coach-photo">
+            <img src="{{ url_for('static', filename='media/coach-brett-watson.webp') }}" alt="Brett Watson" width="432" height="540" loading="lazy" decoding="async">
+            <figcaption><a href="https://msubeavers.com/sports/mens-basketball/roster/coaches/brett-watson/505">Photo: Minot State Athletics, 2015</a></figcaption>
+          </figure>
+          <div class="coach-bio">
+            <p class="eyebrow">HEAD COACH SINCE 2021</p>
+            <p>Watson has led the Wolves since their inaugural season in 2021–22. Before coming to Northwest, he went 66–24 in four seasons at Indianola. His coaching stops also include ADM, Creston, Norwalk, and Minot State.</p>
+            <p>As a player, Watson scored 2,355 points at Elk Horn–Kimballton and earned first-team all-conference honors at Wayne State College in 2005. The IHSAA inducted him into its Basketball Hall of Fame in 2022.</p>
+            <p class="coach-links"><a href="https://www.iahsaa.org/basketball-2022-ihsaa-hall-of-fame/">IHSAA Hall of Fame bio ↗</a> <a href="https://westerniowatoday.com/2021/05/01/former-eh-k-star-hired-to-lead-waukee-northwest-boys-basketball/">Northwest hiring announcement coverage ↗</a></p>
+          </div>
+        </div>
+        <div class="coach-record">
+          <table>
+            <caption>Waukee Northwest varsity record</caption>
+            <thead><tr><th scope="col">Season</th><th scope="col">W–L</th><th scope="col">Postseason</th></tr></thead>
+            <tbody>
+              <tr><th scope="row"><a href="https://www.iahsaa.org/wp-content/uploads/2026/03/4A-3-NW-Johnston-3.10.26.pdf">2025–26</a></th><td>20–5</td><td>State quarterfinal</td></tr>
+              <tr><th scope="row"><a href="https://www.gobound.com/ia/ihsaa/boysbasketball/2024-25/standings">2024–25</a></th><td>23–4</td><td><a href="https://www.gobound.com/ia/ihsaa/boysbasketball/2024-25/brackets/h20250212074418679a7f6c9e21c0241">State runner-up</a></td></tr>
+              <tr><th scope="row"><a href="https://www.iahsaa.org/wp-content/uploads/2024/11/Bulk-Print-%E2%80%B9-Preseason-Basketball-Prospectus-%E2%80%B9-Print-Preview-Gravity-Forms-%E2%80%B9-IHSAA-%E2%80%94-WordPress.pdf">2023–24</a></th><td>15–9</td><td>Substate final</td></tr>
+              <tr><th scope="row"><a href="https://www.iahsaa.org/wp-content/uploads/2023/11/BB-Prospectus-2023-4A-11.29.23.pdf">2022–23</a></th><td>23–3</td><td><a href="https://www.iahsaa.org/wp-content/uploads/2024/09/2024-Basketball-RB-9.19.24.pdf">State runner-up</a></td></tr>
+              <tr><th scope="row"><a href="https://www.iahsaa.org/wp-content/uploads/2022/03/4A-1-Final-3.9.22.htm">2021–22</a></th><td>20–5</td><td>State quarterfinal</td></tr>
+            </tbody>
+            <tfoot><tr><th scope="row">Total</th><td>101–26</td><td>4 state trips</td></tr></tfoot>
+          </table>
+        </div>
       </div>
     </section>
     <footer id="sources">

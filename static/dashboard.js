@@ -42,20 +42,16 @@ function statsBlock(stats, shooting = true) {
     ? tiles(stats, shootingFields, "shooting") : "");
 }
 
-function gameTeam(team, game, showPlayers, showStats) {
+function gameTeam(team, showPlayers) {
   const names = showPlayers ? (team.players || []) : [];
   return `<div class="matchup-side"><div class="matchup-team">
     ${image(team.logo, "team-mark", 24, 24)}<span>${escape(team.name)}</span>
     ${team.score != null ? `<b>${escape(team.score)}</b>` : ""}</div>
-    ${names.length ? `<ul class="game-players" aria-label="Tracked Wolves at ${escape(team.name)}">${names.map((name) => {
-      const stats = showStats && game.lines?.[name];
-      const player = showStats && data.players.find((entry) => entry.name === name);
-      return `<li><p class="game-player">${image(player?.portrait, "live-portrait", 24, 24)}${escape(name)}</p>
-        ${stats ? statsBlock(stats) : ""}</li>`;
-    }).join("")}</ul>` : ""}</div>`;
+    ${names.length ? `<ul class="game-players" aria-label="Tracked Wolves at ${escape(team.name)}">
+      ${names.map((name) => `<li class="game-player">${escape(name)}</li>`).join("")}</ul>` : ""}</div>`;
 }
 
-function gameCard(game, {showDate = false, showPlayers = false, showStats = false} = {}) {
+function gameCard(game, {showDate = false, showPlayers = false} = {}) {
   const matchup = game.matchup?.length === 2 ? game.matchup : null;
   const label = game.state === "pre" ? game.time : [game.status, !matchup && game.score].filter(Boolean).join(" · ");
   const gameLink = game.state === "post" ? "Box score" : game.state === "in" ? "Live game" : "Game details";
@@ -64,7 +60,7 @@ function gameCard(game, {showDate = false, showPlayers = false, showStats = fals
   return `<article class="game ${game.state === "in" ? "is-live" : ""}">
     <div class="game-meta"><span>${escape(showDate ? date(game.date) + " · " + label : label)}</span>
     ${game.delayed ? "<span>Delayed</span>" : ""}</div>
-    ${matchup ? `<div class="matchup">${matchup.map((team) => gameTeam(team, game, showPlayers, showStats)).join("")}</div>
+    ${matchup ? `<div class="matchup">${matchup.map((team) => gameTeam(team, showPlayers)).join("")}</div>
       <div class="game-link">${link(game.url, gameLink, game.name)}</div>` : link(game.url, game.name)}
     ${channels.length || watch ? `<div class="game-broadcast">
       ${channels.length ? `<span class="broadcast-label">TV / Stream</span> <span>${escape(channels.join(" · "))}</span>` : ""}
@@ -73,17 +69,32 @@ function gameCard(game, {showDate = false, showPlayers = false, showStats = fals
   </article>`;
 }
 
+function playerHeader(player, label) {
+  return `<header class="player-head">
+      ${image(player.portrait, "portrait", 72, 86)}
+      <div class="player-identity"><p class="eyebrow">${escape(label)}</p>
+      <h3>${escape(player.name)}</h3><p class="player-school">${image(player.team_logo, "team-mark", 22, 22)}
+      <span>${escape(player.school)} · ${escape(player.position)}</span></p></div>
+      <span class="number">#${escape(player.number)}</span>
+    </header>`;
+}
+
+function liveGame(game) {
+  const players = data.players.filter((player) => game.lines?.[player.name]);
+  return `<div class="live-game" role="group" aria-label="${escape(game.name)}">
+    ${gameCard(game, {showPlayers: true})}
+    ${players.map((player) => `<article class="player-card live-card">
+      ${playerHeader(player, game.delayed ? "Live stats · delayed" : "Live stats")}
+      <div class="player-body">${statsBlock(game.lines[player.name])}</div>
+    </article>`).join("")}
+  </div>`;
+}
+
 function playerCard(player) {
   const avg = player.average;
   const last = player.last;
   return `<article class="player-card">
-    <header class="player-head">
-      ${image(player.portrait, "portrait", 72, 86)}
-      <div class="player-identity"><p class="eyebrow">${escape(player.level)} · ${escape(player.program)}</p>
-      <h3>${escape(player.name)}</h3><p class="player-school">${image(player.team_logo, "team-mark", 22, 22)}
-      <span>${escape(player.school)} · ${escape(player.position)}</span></p></div>
-      <span class="number">#${escape(player.number)}</span>
-    </header>
+    ${playerHeader(player, `${player.level} · ${player.program}`)}
     <div class="player-body">
       ${player.archive ? `<p class="empty">College roster archive · ${escape(player.archive)}</p>` : ""}
       ${player.previous?.length ? `<p class="empty">Previously at ${escape(player.previous.join(", "))}</p>` : ""}
@@ -127,7 +138,7 @@ function render() {
     || empty(waiting ? "Checking the college schedules…" : complete ? "No tracked games today." : "No games confirmed yet."));
   update("upcoming-games", data.upcoming.map((game) => gameCard(game, {showDate: true})).join("")
     || empty(waiting ? "Checking the college schedules…" : "No upcoming games confirmed."));
-  update("live-games", data.live.map((game) => gameCard(game, {showPlayers: true, showStats: true})).join("")
+  update("live-games", data.live.map(liveGame).join("")
     || empty("No tracked games are live right now."));
   renderFeedStatus();
   renderPlayers();
