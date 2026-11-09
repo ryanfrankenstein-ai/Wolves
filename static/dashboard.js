@@ -42,13 +42,19 @@ function statsBlock(stats, shooting = true) {
     ? tiles(stats, shootingFields, "shooting") : "");
 }
 
+function playerName(name, url) {
+  return url?.startsWith("/players/")
+    ? `<a class="player-name" href="${escape(url)}">${escape(name)}</a>`
+    : escape(name);
+}
+
 function gameTeam(team, showPlayers) {
   const names = showPlayers ? (team.players || []) : [];
   return `<div class="matchup-side"><div class="matchup-team">
     ${image(team.logo, "team-mark", 24, 24)}<span>${escape(team.name)}</span>
     ${team.score != null ? `<b>${escape(team.score)}</b>` : ""}</div>
     ${names.length ? `<ul class="game-players" aria-label="Tracked Wolves at ${escape(team.name)}">
-      ${names.map((name) => `<li class="game-player">${escape(name)}</li>`).join("")}</ul>` : ""}</div>`;
+      ${names.map((name) => `<li class="game-player">${playerName(name, data.players.find((player) => player.name === name)?.game_log_url)}</li>`).join("")}</ul>` : ""}</div>`;
 }
 
 function gameCard(game, {showDate = false, showPlayers = false} = {}) {
@@ -73,7 +79,7 @@ function playerHeader(player, label, starterNote = "") {
   return `<header class="player-head">
       ${image(player.portrait, "portrait", 72, 86)}
       <div class="player-identity"><p class="eyebrow">${escape(label)}</p>
-      <h3>${escape(player.name)}</h3><p class="player-school">${image(player.team_logo, "team-mark", 22, 22)}
+      <h3>${playerName(player.name, player.game_log_url)}</h3><p class="player-school">${image(player.team_logo, "team-mark", 22, 22)}
       <span>${escape(player.school)} · ${escape(player.position)}</span></p>
       ${starterNote ? `<small class="starter-note">${escape(starterNote)}</small>` : ""}</div>
       <span class="number">#${escape(player.number)}</span>

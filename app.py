@@ -9,9 +9,9 @@ import time
 from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
-from flask import Flask, jsonify, render_template, request, url_for
+from flask import Flask, abort, jsonify, render_template, request, url_for
 
-from feeds import read_team
+from feeds import normalized, read_team
 
 
 app = Flask(__name__)
@@ -19,6 +19,9 @@ CENTRAL = ZoneInfo("America/Chicago")
 ROSTER = json.loads(Path(__file__).with_name("roster.json").read_text(encoding="utf-8"))
 TEAMS = ROSTER["teams"]
 PLAYERS = ROSTER["players"]
+PLAYERS_BY_SLUG = {normalized(player["name"]).replace(" ", "-"): player for player in PLAYERS}
+GAME_STATS = {"pts": "PTS", "reb": "REB", "ast": "AST", "min": "MIN", "stl": "STL",
+              "blk": "BLK", "fg": "FG", "3pt": "3PT", "ft": "FT"}
 TEAM_BY_ESPN = {str(team["espn"]): key for key, team in TEAMS.items() if team.get("espn")}
 TEAM_BY_NAME = {team["name"].casefold(): key for key, team in TEAMS.items()}
 TEAM_BY_HOST = {urlsplit(team["schedule"]).hostname.removeprefix("www."): key for key, team in TEAMS.items()}
@@ -80,9 +83,8 @@ def game_with_players(game):
     return {**game, "matchup": matchup}
 
 
-def dashboard():
+def refresh_snapshot():
     global checking
-    now = datetime.now(CENTRAL)
     with lock:
         if not checking and not os.environ.get("WOLVES_OFFLINE"):
             tick = time.monotonic()
@@ -90,7 +92,12 @@ def dashboard():
             if due:
                 checking = True
                 threading.Thread(target=refresh, args=(due,), daemon=True).start()
-        data, refreshing = dict(cache), checking
+        return dict(cache), checking
+
+
+def dashboard():
+    now = datetime.now(CENTRAL)
+    data, refreshing = refresh_snapshot()
     today = now.date().isoformat()
     yesterday = (now.date() - timedelta(days=1)).isoformat()
     games = {}
@@ -110,14 +117,16 @@ def dashboard():
                                  max(freshness, current_freshness))
     ordered = sorted((game for game, _ in games.values()), key=lambda game: game["start"])
     players = []
-    for player in PLAYERS:
+    for slug, player in PLAYERS_BY_SLUG.items():
         result = data.get(player["team"], {})
-        line = result.get("players", {}).get(player["name"], {})
+        line = dict(result.get("players", {}).get(player["name"], {}))
+        line.pop("game_log", None)
         team = TEAMS[player["team"]]
         players.append({**player, **line, "school": team["name"], "level": team["level"],
                         "program": team["program"], "schedule": team.get("schedule"), "stats_url": team.get("stats"),
                         "portrait": url_for("static", filename=player["photo"]) if player.get("photo") else None,
                         "team_logo": url_for("static", filename=team["logo"]) if team.get("logo") else None,
+                        "game_log_url": url_for("player_game_log", slug=slug),
                         "delayed": result.get("delayed", False)})
     players.sort(key=lambda player: player.get("last", {}).get("start", ""), reverse=True)
     return {"players": players, "today": [game_with_players(game) for game in ordered if game["date"] == today],
@@ -134,6 +143,22 @@ def dashboard():
 @app.get("/")
 def home():
     return render_template("index.html", data=dashboard(), teams=TEAMS)
+
+
+@app.get("/players/<slug>")
+def player_game_log(slug):
+    player = PLAYERS_BY_SLUG.get(slug)
+    if player is None:
+        abort(404)
+    data, refreshing = refresh_snapshot()
+    team = TEAMS[player["team"]]
+    result = data.get(player["team"], {})
+    line = result.get("players", {}).get(player["name"], {})
+    games = [{**game, "date_label": datetime.fromisoformat(game["date"]).strftime("%b %d").replace(" 0", " ")}
+             for game in line.get("game_log", [])]
+    return render_template("game_log.html", player=player, team=team, season=ROSTER["season"],
+                           stats=GAME_STATS, games=games, delayed=result.get("delayed"),
+                           partial=result.get("partial"), pending=refreshing and not result and not player.get("archive"))
 
 
 @app.get("/api/dashboard")

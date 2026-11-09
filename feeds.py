@@ -183,7 +183,9 @@ def collect(games, names, selected, read_box):
     for name, entries in history.items():
         if entries:
             stats = [entry["stats"] for entry in entries]
-            player = {"last": entries[-1], "average": averages(stats), "gp": len(entries), "partial": failed}
+            player = {"last": entries[-1], "average": averages(stats), "gp": len(entries), "partial": failed,
+                      "game_log": [{"date": game["date"], "name": game["name"], "url": game["url"],
+                                    "stats": game["stats"]} for game in reversed(entries)]}
             if all("starter" in line for line in stats):
                 starts = sum(line["starter"] for line in stats)
                 player.update(starts=starts, starter=starts * 2 > len(entries))

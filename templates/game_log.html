@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% if pending %}<meta http-equiv="refresh" content="4">{% endif %}
+  <title>{{ player.name }} Game Log | Waukee Northwest</title>
+  <link rel="icon" href="{{ url_for('static', filename='wolves.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="masthead">
+    <div class="wrap topbar">
+      <a class="brand" href="/"><img src="{{ url_for('static', filename='wolves.png') }}" alt="" width="42" height="42"> Waukee Northwest</a>
+      <nav aria-label="Dashboard"><a href="/#players">Back to players</a></nav>
+    </div>
+  </header>
+  <main class="wrap game-log">
+    <header class="player-card player-head game-log-header">
+      {% if player.photo %}<img class="portrait" src="{{ url_for('static', filename=player.photo) }}" alt="" width="72" height="86">{% endif %}
+      <div class="player-identity">
+        <p class="eyebrow">{{ season }} SEASON GAME LOG</p>
+        <h1>{{ player.name }}</h1>
+        <p class="player-school">
+          {% if team.logo %}<img class="team-mark" src="{{ url_for('static', filename=team.logo) }}" alt="" width="22" height="22">{% endif %}
+          <span>{{ team.name }} · {{ player.position }}</span>
+        </p>
+      </div>
+      <span class="number">#{{ player.number }}</span>
+    </header>
+    <section class="panel" aria-labelledby="log-heading">
+      <div class="section-head"><h2 id="log-heading">Game-by-game stats</h2>
+        {% if games %}<span class="date">{{ games|length }} recorded appearance{% if games|length != 1 %}s{% endif %}</span>{% endif %}
+      </div>
+      {% if pending %}
+      <p class="empty" role="status">Loading the latest box scores. This page will update in a moment.</p>
+      {% elif player.archive %}
+      <p class="empty">This player is in the roster archive for {{ player.archive }} and has no game log for {{ season }}.</p>
+      {% elif not games %}
+      <p class="empty">{{ 'The box-score feed is delayed. Check the official team stats for updates.' if delayed or partial else 'No completed-game appearances are available for this season yet.' }}</p>
+      {% else %}
+      {% if delayed or partial %}<p class="empty log-note" role="status">Box-score coverage is incomplete. Showing the available games.</p>{% endif %}
+      <p class="empty log-note">Completed appearances, most recent first. Open a matchup to see its box score.</p>
+      <div class="log-scroll" tabindex="0" role="region" aria-label="Season game log table">
+        <table class="log-table">
+          <thead><tr><th scope="col">Date</th><th scope="col">Matchup</th>{% for label in stats.values() %}<th scope="col">{{ label }}</th>{% endfor %}</tr></thead>
+          <tbody>
+            {% for game in games %}
+            <tr>
+              <td><time datetime="{{ game.date }}">{{ game.date_label }}</time></td>
+              <th scope="row">
+                {% if game.url.startswith('https://') %}<a href="{{ game.url }}">{{ game.name }}</a>{% else %}{{ game.name }}{% endif %}
+                {% if game.stats.starter %}<small class="starter-note">Starter</small>{% endif %}
+              </th>
+              {% for key in stats %}<td>{{ game.stats.get(key, '—') }}</td>{% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+      <div class="links log-links"><a href="{{ player.bio }}">Official player bio ↗</a>
+        {% if not player.archive %}<a href="{{ team.stats }}">Official team stats ↗</a>{% endif %}
+      </div>
+    </section>
+  </main>
+</body>
+</html>
