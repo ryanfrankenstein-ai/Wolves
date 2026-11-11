@@ -20,7 +20,7 @@ ROSTER = json.loads(Path(__file__).with_name("roster.json").read_text(encoding="
 TEAMS = ROSTER["teams"]
 PLAYERS = ROSTER["players"]
 PLAYERS_BY_SLUG = {normalized(player["name"]).replace(" ", "-"): player for player in PLAYERS}
-GAME_STATS = {"pts": "PTS", "reb": "REB", "ast": "AST", "min": "MIN", "stl": "STL",
+GAME_STATS = {"min": "Minutes", "pts": "PTS", "reb": "REB", "ast": "AST", "stl": "STL",
               "blk": "BLK", "fg": "FG", "3pt": "3PT", "ft": "FT"}
 TEAM_BY_ESPN = {str(team["espn"]): key for key, team in TEAMS.items() if team.get("espn")}
 TEAM_BY_NAME = {team["name"].casefold(): key for key, team in TEAMS.items()}
@@ -123,6 +123,7 @@ def dashboard():
         line.pop("game_log", None)
         team = TEAMS[player["team"]]
         players.append({**player, **line, "school": team["name"], "level": team["level"],
+                        "team_record": result.get("team_record") if not player.get("archive") else None,
                         "program": team["program"], "schedule": team.get("schedule"), "stats_url": team.get("stats"),
                         "portrait": url_for("static", filename=player["photo"]) if player.get("photo") else None,
                         "team_logo": url_for("static", filename=team["logo"]) if team.get("logo") else None,

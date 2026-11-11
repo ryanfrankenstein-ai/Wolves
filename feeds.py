@@ -153,8 +153,19 @@ def read_espn(team, names):
     since = (datetime.now(CT).date() - timedelta(days=2)).isoformat()
     completed = [game for game in games if game["state"] == "post" and not game["exhibition"]]
     in_progress = [game for game in games if game["state"] == "in" and game["date"] >= since]
-    return collect(games, names, sorted(completed, key=lambda game: game["start"]) + in_progress,
-                   lambda game: espn_lines(base, game, team_id))
+    result = collect(games, names, sorted(completed, key=lambda game: game["start"]) + in_progress,
+                     lambda game: espn_lines(base, game, team_id))
+    outcomes = []
+    for event, game in zip(schedule["events"], games):
+        competition = event["competitions"][0]
+        status = (competition.get("status") or event["status"])["type"]
+        if game["exhibition"] or not status.get("completed"):
+            continue
+        competitor = next((entry for entry in competition["competitors"] if str(entry["team"]["id"]) == team_id), {})
+        if isinstance(competitor.get("winner"), bool):
+            outcomes.append(competitor["winner"])
+    result["team_record"] = f"{sum(outcomes)}–{len(outcomes) - sum(outcomes)}"
+    return result
 
 
 def collect(games, names, selected, read_box):
@@ -290,6 +301,13 @@ def read_official(team, names):
     selected = sorted((game for game in games if game["state"] == "post" and game["box"] and not game["exhibition"]),
                       key=lambda game: game["start"])
     result = collect(games, names, selected, lambda game: official_lines(game["box"]))
+    outcomes = [
+        int(game["matchup"][0]["score"]) > int(game["matchup"][1]["score"])
+        for game in games
+        if game["state"] == "post" and game["score"] and not game["exhibition"]
+        and game["matchup"][0]["score"] != game["matchup"][1]["score"]
+    ]
+    result["team_record"] = f"{sum(outcomes)}–{len(outcomes) - sum(outcomes)}"
     if any(game["state"] == "post" and not game["box"] and game["score"] and not game["exhibition"] for game in games):
         result["partial"] = True
         for player in result["players"].values():

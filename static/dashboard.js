@@ -81,6 +81,7 @@ function playerHeader(player, label, starterNote = "") {
       <div class="player-identity"><p class="eyebrow">${escape(label)}</p>
       <h3>${playerName(player.name, player.game_log_url)}</h3><p class="player-school">${image(player.team_logo, "team-mark", 22, 22)}
       <span>${escape(player.school)} · ${escape(player.position)}</span></p>
+      ${player.team_record ? `<small class="team-record">Team record · ${escape(player.team_record)}</small>` : ""}
       ${starterNote ? `<small class="starter-note">${escape(starterNote)}</small>` : ""}</div>
       <span class="number">#${escape(player.number)}</span>
     </header>`;
