@@ -87,10 +87,12 @@ function playerHeader(player, label, starterNote = "") {
     </header>`;
 }
 
-function liveGame(game) {
+function liveGame(game, shownToday) {
   const players = data.players.filter((player) => game.lines?.[player.name]);
+  if (shownToday && !players.length) return "";
   return `<div class="live-game" role="group" aria-label="${escape(game.name)}">
-    ${gameCard(game, {showPlayers: true})}
+    ${shownToday ? `<p class="block-title live-matchup">${escape(game.name)}</p>`
+      : gameCard(game, {showDate: true, showPlayers: true})}
     ${players.map((player) => `<article class="player-card live-card">
       ${playerHeader(player, game.delayed ? "Live stats · delayed" : "Live stats",
         game.lines[player.name].starter ? "Starter this game" : "")}
@@ -146,12 +148,14 @@ function render() {
   const waiting = data.refreshing && !ready;
   const complete = ready && !data.delayed.length;
   const empty = (message) => `<p class="empty">${message}</p>`;
+  const todayIds = new Set(data.today.map((game) => game.id));
   update("today-games", data.today.map((game) => gameCard(game, {showPlayers: true})).join("")
     || empty(waiting ? "Checking the college schedules…" : complete ? "No tracked games today." : "No games confirmed yet."));
-  update("upcoming-games", data.upcoming.map((game) => gameCard(game, {showDate: true})).join("")
+  update("upcoming-games", data.upcoming.filter((game) => !todayIds.has(game.id))
+    .map((game) => gameCard(game, {showDate: true})).join("")
     || empty(waiting ? "Checking the college schedules…" : "No upcoming games confirmed."));
-  update("live-games", data.live.map(liveGame).join("")
-    || empty("No tracked games are live right now."));
+  update("live-games", data.live.map((game) => liveGame(game, todayIds.has(game.id))).join("")
+    || empty(data.live.length ? "Waiting for live player stats." : "No tracked games are live right now."));
   renderFeedStatus();
   renderPlayers();
 }

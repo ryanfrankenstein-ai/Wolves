@@ -131,7 +131,7 @@ def dashboard():
                         "delayed": result.get("delayed", False)})
     players.sort(key=lambda player: player.get("last", {}).get("start", ""), reverse=True)
     return {"players": players, "today": [game_with_players(game) for game in ordered if game["date"] == today],
-            "upcoming": [game for game in ordered if game["date"] >= today and game["state"] == "pre"][:10],
+            "upcoming": [game for game in ordered if game["date"] > today and game["state"] == "pre"][:10],
             "live": [game_with_players(game) for game in ordered if game["state"] == "in" and game["date"] >= yesterday],
             "refreshing": refreshing,
             "ready": all(key in data for key in TRACKED_TEAMS),

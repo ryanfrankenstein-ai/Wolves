@@ -53,6 +53,7 @@ h1 em {color:#dce6ff;font-style:normal}
 .live-games {display:grid;gap:16px}
 .live-game {display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%, 300px),1fr));gap:12px;align-items:start}
 .live-game > * {width:100%;max-width:380px}
+.live-game > .live-matchup {grid-column:1 / -1;max-width:none;margin:0}
 .live-card .stat {padding-inline:2px}
 .feed-status {margin-top:9px}
 .feed-status:empty {display:none}
